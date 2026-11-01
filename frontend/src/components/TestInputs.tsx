@@ -6,6 +6,7 @@ import {
   Select,
   MenuItem,
   FormControl,
+  FormHelperText,
   InputLabel,
   FormGroup,
   FormControlLabel,
@@ -390,6 +391,13 @@ const TestInputs: React.FC<TestInputsProps> = ({
                             No correction
                           </MenuItem>
                         </Select>
+                        {correction === CorrectionType.NONE && (
+                          <FormHelperText>
+                            P-values will not be corrected for multiple
+                            testing. The results page and downloads will say
+                            so.
+                          </FormHelperText>
+                        )}
                       </FormControl>
                     </Stack>
                   </FormSection>

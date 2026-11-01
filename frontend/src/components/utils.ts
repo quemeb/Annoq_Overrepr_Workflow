@@ -114,10 +114,18 @@ export type RunStamp = {
   annotationDataset: string; // e.g. ANNOT_TYPE_ID_PANTHER_PATHWAY
 };
 
+// Value of the correction header line when no correction was applied.
+export const NO_CORRECTION_STAMP =
+  "NONE - p-values are uncorrected for multiple testing";
+
 // "# name,value" lines with the versions and settings of the run, placed at
 // the top of every download. Values that are not known are written as unknown.
 export const runStampLines = (stamp: RunStamp): string[] => {
   const known = (value: string | null | undefined) => value || "unknown";
+  const correction =
+    stamp.correction === CorrectionType.NONE
+      ? NO_CORRECTION_STAMP
+      : known(stamp.correction);
   return [
     `# annoq_panel,${known(stamp.versions?.annoq_panel)}`,
     `# dbsnp_release,${known(stamp.versions?.dbsnp_release)}`,
@@ -125,7 +133,7 @@ export const runStampLines = (stamp: RunStamp): string[] => {
     `# panther_tool_release,${known(stamp.versions?.panther_tool_release)}`,
     `# gene_mapping_sources,${known(stamp.geneMappingFields.join(";"))}`,
     `# test,${known(stamp.testType)}`,
-    `# correction,${known(stamp.correction)}`,
+    `# correction,${correction}`,
     `# run_date,${known(stamp.runDate)}`,
     `# annotation_dataset,${known(stamp.annotationDataset)}`,
   ];

@@ -692,6 +692,14 @@ const ResultDisplay: React.FC<ResultDisplayProps> = ({
         </Box>
       </Box>
 
+      {correctionType === CorrectionType.NONE && (
+        <Alert severity="warning" sx={{ mb: 2 }}>
+          No correction for multiple testing was applied. The p-values shown
+          are uncorrected, so some categories with p &lt; 0.05 are expected
+          by chance alone.
+        </Alert>
+      )}
+
       {preparingDownloads && (
         <Alert severity="info" icon={false} sx={{ mb: 2, "& .MuiAlert-message": { width: "100%" } }}>
           <Typography variant="body2" sx={{ mb: 1 }}>

@@ -85,6 +85,22 @@ describe("runStampLines", () => {
   });
 });
 
+describe("runStampLines without correction", () => {
+  it("flags uncorrected p-values in the correction line", () => {
+    const lines = runStampLines({
+      versions: null,
+      geneMappingFields: ["ANNOVAR_ensembl_Gene_ID"],
+      testType: "FISHER",
+      correction: "NONE",
+      runDate: "2026-11-01",
+      annotationDataset: "ANNOT_TYPE_ID_PANTHER_PATHWAY",
+    });
+    expect(lines).toContain(
+      "# correction,NONE - p-values are uncorrected for multiple testing"
+    );
+  });
+});
+
 describe("withRunDate", () => {
   it("puts the run date before the .csv extension", () => {
     expect(withRunDate("gene_mapping_results.csv", "2026-10-29")).toBe(
