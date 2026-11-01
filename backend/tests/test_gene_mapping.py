@@ -3,13 +3,13 @@ import pytest
 from pydantic import ValidationError
 
 from src.annoq import get_rsid_gene_mapping, get_rsid_gene_mapping_with_sources
-from src.gene_cols import ALL_GENE_MAPPING_FIELDS, GeneMappingField
+from src.gene_cols import ALL_GENE_MAPPING_FIELDS, GeneColumn, GeneMappingField
 from src.models import ReferenceListInput, WorkflowInputRequest
 
 
 def _annoq_row(**overrides: str) -> dict[str, str]:
     row = {"chr": "1", "pos": "100", "rs_dbSNP151": "rs1"}
-    row.update({field.value: "" for field in GeneMappingField})
+    row.update({column.value: "" for column in GeneColumn})
     row.update(overrides)
     return row
 

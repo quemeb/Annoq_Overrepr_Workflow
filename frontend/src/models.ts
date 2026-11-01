@@ -61,7 +61,7 @@ export type InputReport = {
     gene_identifiers: GeneIdentifierReportRow[] | null;
 }
 
-// Variant key -> gene -> the gene columns (GeneMappingField values) that
+// Variant key -> gene -> the AnnoQ gene columns (GENE_MAPPING_COLUMNS values) that
 // assigned the gene to the variant.
 export type GeneSources = Record<string, Record<string, string[]>>;
 

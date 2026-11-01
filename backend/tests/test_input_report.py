@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from src.annoq import get_rsid_gene_mapping
-from src.gene_cols import GeneMappingField
+from src.gene_cols import GeneColumn, GeneMappingField
 from src.input_report import (
     account_for_variants,
     build_input_report,
@@ -20,7 +20,7 @@ def _annoq_df(rows: list[dict[str, str]]) -> pd.DataFrame:
     full_rows = []
     for row in rows:
         full_row = {"chr": "1", "pos": "100", "rs_dbSNP151": ""}
-        full_row.update({field.value: "" for field in GeneMappingField})
+        full_row.update({column.value: "" for column in GeneColumn})
         full_row.update(row)
         full_rows.append(full_row)
     return pd.DataFrame(full_rows)

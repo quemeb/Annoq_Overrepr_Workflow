@@ -6,7 +6,15 @@ import httpx
 import pandas as pd
 
 from src.config import config
-from src.gene_cols import ALL_GENE_MAPPING_FIELDS, GENE_COLS, GeneMappingField
+from src.gene_cols import (
+    ALL_GENE_MAPPING_FIELDS,
+    ANNOQ_DOWNLOAD_COLUMN_NAMES,
+    FALLBACK_FOR,
+    GENE_COLS,
+    GeneColumn,
+    GeneMappingField,
+    gene_columns_for,
+)
 from src.progress import ProgressCallback, report_progress
 from src.query import (
     GeneQuery,
@@ -28,7 +36,7 @@ ANNOQ_TIMEOUT_SECONDS = 300.0
 # dbSNP build of the rsIDs: the backend reads AnnoQ's rs_dbSNP151 field.
 ANNOQ_DBSNP_RELEASE = "151"
 # Variant key -> gene -> the gene columns that assigned the gene to the variant.
-GeneSources = dict[str, dict[str, list[GeneMappingField]]]
+GeneSources = dict[str, dict[str, list[GeneColumn]]]
 
 
 def _chunk_items(items: list[str], chunk_size: int) -> list[list[str]]:
@@ -242,8 +250,9 @@ def get_rsid_gene_mapping_with_sources(
     selected_fields = (
         ALL_GENE_MAPPING_FIELDS if gene_mapping_fields is None else gene_mapping_fields
     )
+    selected_columns = gene_columns_for(selected_fields)
     gemap: dict[str, list[str]] = {}
-    sources: dict[str, dict[str, set[GeneMappingField]]] = {}
+    sources: dict[str, dict[str, set[GeneColumn]]] = {}
     for _, row in annoq_df.iterrows():
         key = variant_key(row, force_chr_pos_keys)
 
@@ -252,10 +261,16 @@ def get_rsid_gene_mapping_with_sources(
 
         # Get the genes
         genes: list[str] = []
-        row_sources: dict[str, set[GeneMappingField]] = {}
-        for gene_field in selected_fields:
+        row_sources: dict[str, set[GeneColumn]] = {}
+        column_genes: dict[GeneColumn, list[str]] = {}
+        for gene_field in selected_columns:
+            # Closest genes only for variants the genic column leaves without a gene
+            genic_column = FALLBACK_FOR.get(gene_field)
+            if genic_column is not None and column_genes.get(genic_column):
+                continue
             gene_extractor = GENE_COLS[gene_field]
             single_type_genes = gene_extractor(row[gene_field.value])
+            column_genes[gene_field] = [g for g in single_type_genes if g.strip()]
 
             # Add the genes to the set
             genes.extend(single_type_genes)
@@ -424,7 +439,9 @@ async def download_data(download_url: str) -> pd.DataFrame:
         # Use the first row as the header
         # Use tab as the separator
         buffer = StringIO(response.text)
-        return pd.read_csv(buffer, sep="\t", header=0)
+        df = pd.read_csv(buffer, sep="\t", header=0)
     except Exception as e:
         print(f"Error: {e}")
         raise Exception(f"Failed to download data: could not parse AnnoQ file ({e})")
+    # Some AnnoQ download headers are display names, not query field names
+    return df.rename(columns=ANNOQ_DOWNLOAD_COLUMN_NAMES)

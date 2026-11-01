@@ -1,7 +1,9 @@
 import {
-  ALL_GENE_MAPPING_FIELDS,
+  ALL_GENE_COLUMNS,
   CorrectionType,
+  GENE_MAPPING_COLUMNS,
   GENE_MAPPING_SOURCE_LABELS,
+  GeneMappingField,
 } from "../constants";
 import {
   GeneMappingDownloadData,
@@ -118,6 +120,12 @@ export type RunStamp = {
 export const NO_CORRECTION_STAMP =
   "NONE - p-values are uncorrected for multiple testing";
 
+// AnnoQ gene columns behind the selected sources (ANNOVAR adds its closest-gene column).
+const geneMappingColumns = (fields: string[]): string[] =>
+  fields.flatMap(
+    (field) => GENE_MAPPING_COLUMNS[field as GeneMappingField] ?? [field]
+  );
+
 // "# name,value" lines with the versions and settings of the run, placed at
 // the top of every download. Values that are not known are written as unknown.
 export const runStampLines = (stamp: RunStamp): string[] => {
@@ -131,7 +139,7 @@ export const runStampLines = (stamp: RunStamp): string[] => {
     `# dbsnp_release,${known(stamp.versions?.dbsnp_release)}`,
     `# panther_version,${known(stamp.versions?.panther_version)}`,
     `# panther_tool_release,${known(stamp.versions?.panther_tool_release)}`,
-    `# gene_mapping_sources,${known(stamp.geneMappingFields.join(";"))}`,
+    `# gene_mapping_sources,${known(geneMappingColumns(stamp.geneMappingFields).join(";"))}`,
     `# test,${known(stamp.testType)}`,
     `# correction,${correction}`,
     `# run_date,${known(stamp.runDate)}`,
@@ -165,7 +173,7 @@ export const saveCsvFile = (csvContent: string, fileName: string) => {
 
 // Source names of these gene columns, in column order.
 const sourceLabels = (fields: Set<string>): string[] =>
-  ALL_GENE_MAPPING_FIELDS.filter((field) => fields.has(field)).map(
+  ALL_GENE_COLUMNS.filter((field) => fields.has(field)).map(
     (field) => GENE_MAPPING_SOURCE_LABELS[field]
   );
 

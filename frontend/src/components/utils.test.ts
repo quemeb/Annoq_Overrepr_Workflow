@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CorrectionType } from "../constants";
+import { ALL_GENE_MAPPING_FIELDS, CorrectionType } from "../constants";
 import {
   GeneMappingDownloadData,
   GeneSources,
@@ -76,12 +76,42 @@ describe("runStampLines", () => {
       "# dbsnp_release,151",
       "# panther_version,PANTHER version 19.0 Released 2024-06-20",
       "# panther_tool_release,20240807",
-      "# gene_mapping_sources,ANNOVAR_ensembl_Gene_ID;enhancer_linked_genes",
+      "# gene_mapping_sources,ANNOVAR_ensembl_Gene_ID;ANNOVAR_ensembl_Closest_gene;enhancer_linked_genes",
       "# test,FISHER",
       "# correction,FDR",
       "# run_date,2026-10-29",
       "# annotation_dataset,ANNOT_TYPE_ID_PANTHER_PATHWAY",
     ]);
+  });
+});
+
+describe("runStampLines gene mapping sources", () => {
+  it("lists each ANNOVAR closest-gene column after its genic column", () => {
+    const lines = runStampLines({
+      versions: null,
+      geneMappingFields: ALL_GENE_MAPPING_FIELDS,
+      testType: "FISHER",
+      correction: "FDR",
+      runDate: "2026-11-01",
+      annotationDataset: "ANNOT_TYPE_ID_PANTHER_PATHWAY",
+    });
+    expect(lines).toContain(
+      "# gene_mapping_sources,ANNOVAR_ensembl_Gene_ID;ANNOVAR_ensembl_Closest_gene;" +
+        "ANNOVAR_refseq_Gene_ID;ANNOVAR_refseq_Closest_gene;SnpEff_ensembl_Gene_ID;" +
+        "SnpEff_refseq_Gene_ID;VEP_ensembl_Gene_ID;VEP_refseq_Gene_Name;enhancer_linked_genes"
+    );
+  });
+
+  it("adds no closest-gene column without ANNOVAR", () => {
+    const lines = runStampLines({
+      versions: null,
+      geneMappingFields: ["SnpEff_refseq_Gene_ID"],
+      testType: "FISHER",
+      correction: "FDR",
+      runDate: "2026-11-01",
+      annotationDataset: "ANNOT_TYPE_ID_PANTHER_PATHWAY",
+    });
+    expect(lines).toContain("# gene_mapping_sources,SnpEff_refseq_Gene_ID");
   });
 });
 
@@ -132,6 +162,22 @@ describe("gene sources", () => {
     expect(
       variantGeneSources(sources, "rs1", ["GENEA", "ENSG00000000001"])
     ).toEqual(["ANNOVAR-Ensembl", "ANNOVAR-RefSeq", "VEP-RefSeq", "enhancer"]);
+  });
+
+  it("labels genes from the ANNOVAR closest-gene columns", () => {
+    const closest: GeneSources = {
+      rs3: {
+        KLF5: ["ANNOVAR_refseq_Closest_gene", "SnpEff_refseq_Gene_ID"],
+        ENSG00000201253: ["ANNOVAR_ensembl_Closest_gene"],
+      },
+    };
+    expect(variantGeneSources(closest, "rs3", ["KLF5"])).toEqual([
+      "ANNOVAR-RefSeq-closest",
+      "SnpEff-RefSeq",
+    ]);
+    expect(variantGeneSources(closest, "rs3", ["ENSG00000201253"])).toEqual([
+      "ANNOVAR-Ensembl-closest",
+    ]);
   });
 
   it("shows only enhancer for an enhancer-only gene", () => {

@@ -3,7 +3,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field, field_validator
 
-from src.gene_cols import ALL_GENE_MAPPING_FIELDS, GeneMappingField
+from src.gene_cols import ALL_GENE_MAPPING_FIELDS, GeneColumn, GeneMappingField
 from src.query import (
     GeneListQuery,
     GeneQuery,
@@ -64,7 +64,7 @@ class GeneMappingsResponse(BaseModel):
         ..., description="Mapping of variant key (rsID or chr:pos) to genes"
     )
 
-    rsId_gene_sources: dict[str, dict[str, list[GeneMappingField]]] = Field(
+    rsId_gene_sources: dict[str, dict[str, list[GeneColumn]]] = Field(
         default_factory=dict,
         description=(
             "For each variant key and gene in rsId_genes_map, the selected gene "
